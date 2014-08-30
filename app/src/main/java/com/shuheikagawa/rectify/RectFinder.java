@@ -1,7 +1,5 @@
 package com.shuheikagawa.rectify;
 
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.util.Log;
 
 import org.opencv.core.Core;
@@ -11,7 +9,6 @@ import org.opencv.core.MatOfInt;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
-import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
@@ -20,120 +17,40 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * Created by shuhei on 8/30/14.
- */
 public class RectFinder {
     private static final String DEBUG_TAG = "RectFinder";
-    private static final int N = 11;
+    private static final int N = 5; // 11 in the original sample.
     private static final int CANNY_THRESHOLD = 50;
-    private static final int AREA_THRESHOLD = 10000;
 
-    public RectFinder() {
+    private double areaThresholdRatio;
+
+    public RectFinder(double areaThresholdRatio) {
+        this.areaThresholdRatio = areaThresholdRatio;
     }
 
-    public Mat drawRectangles(Mat src) {
+    public MatOfPoint2f findRectangle(Mat src) {
         List<MatOfPoint2f> rectangles = findRectangles(src);
         Log.d(DEBUG_TAG, rectangles.size() + " rectangles found.");
 
         if (rectangles.size() == 0) {
             Log.d(DEBUG_TAG, "No rectangles found.");
-            return src;
+            return null;
         }
 
-        Collections.sort(rectangles, AreaComparator);
+        Collections.sort(rectangles, AreaDescendingComparator);
         Log.d(DEBUG_TAG, "Sorted rectangles.");
 
-        MatOfPoint2f largestRectangle = rectangles.get(0);
-
-        return drawPerspectiveTransformation(src, largestRectangle);
-    }
-
-    private Mat drawPerspectiveTransformation(Mat src, MatOfPoint2f corners) {
-        Mat result = Mat.zeros(src.size(), src.type());
-
-        MatOfPoint2f sortedCorners = sortCorners(corners);
-        MatOfPoint2f imageOutline = getOutline(result);
-
-        Log.d(DEBUG_TAG, String.format("%d %d - %d %d", sortedCorners.cols(), sortedCorners.rows(), imageOutline.cols(), imageOutline.rows()));
-        Log.d(DEBUG_TAG, String.format("%d - %d", sortedCorners.checkVector(2, CvType.CV_32F), imageOutline.checkVector(2, CvType.CV_32F)));
-
-        Mat transformation = Imgproc.getPerspectiveTransform(sortedCorners, imageOutline);
-        Imgproc.warpPerspective(src, result, transformation, result.size());
-
-        return result;
-    }
-
-    private MatOfPoint2f getOutline(Mat image) {
-        Point topLeft = new Point(0, 0);
-        Point topRight = new Point(image.cols(), 0);
-        Point bottomRight = new Point(image.cols(), image.rows());
-        Point bottomLeft = new Point(0, image.rows());
-        Point[] points = {topLeft, topRight, bottomRight, bottomLeft};
-
-        MatOfPoint2f result = new MatOfPoint2f();
-        result.fromArray(points);
-
-        return result;
-    }
-
-    private MatOfPoint2f sortCorners(MatOfPoint2f corners) {
-        Point center = getMathCenter(corners);
-        List<Point> points = corners.toList();
-        List<Point> topPoints = new ArrayList<Point>();
-        List<Point> bottomPoints = new ArrayList<Point>();
-
-        for (Point point : points) {
-            if (point.y < center.y) {
-                topPoints.add(point);
-            } else {
-                bottomPoints.add(point);
-            }
-        }
-
-        Point topLeft = topPoints.get(0).x > topPoints.get(1).x ? topPoints.get(1) : topPoints.get(0);
-        Point topRight = topPoints.get(0).x > topPoints.get(1).x ? topPoints.get(0) : topPoints.get(1);
-        Point bottomLeft = bottomPoints.get(0).x > bottomPoints.get(1).x ? bottomPoints.get(1) : bottomPoints.get(0);
-        Point bottomRight = bottomPoints.get(0).x > bottomPoints.get(1).x ? bottomPoints.get(0) : bottomPoints.get(1);
-
-        MatOfPoint2f result = new MatOfPoint2f();
-        Point[] sortedPoints = {topLeft, topRight, bottomRight, bottomLeft};
-        result.fromArray(sortedPoints);
-
-        return result;
-    }
-
-    private Point getMathCenter(MatOfPoint2f points) {
-        double xSum = 0;
-        double ySum = 0;
-        List<Point> pointList = points.toList();
-        int len = pointList.size();
-        for (Point point : pointList) {
-            xSum += point.x;
-            ySum += point.y;
-        }
-        return new Point(xSum / len, ySum / len);
+        return rectangles.get(0);
     }
 
     // Compare contours by their areas in descending order.
-    private static Comparator<MatOfPoint2f> AreaComparator = new Comparator<MatOfPoint2f>() {
+    private static Comparator<MatOfPoint2f> AreaDescendingComparator = new Comparator<MatOfPoint2f>() {
         public int compare(MatOfPoint2f m1, MatOfPoint2f m2) {
             double area1 = Imgproc.contourArea(m1);
             double area2 = Imgproc.contourArea(m2);
             return (int) Math.ceil(area2 - area1);
         }
     };
-
-    private Mat draw(Mat src, List<MatOfPoint> rectangles) {
-        Mat result = new Mat(src.size(), src.type());
-        src.copyTo(result);
-
-        Scalar color = new Scalar(255);
-        int contourIndex = -1; // To draw all contours.
-        Imgproc.drawContours(result, rectangles, contourIndex, color, 3);
-
-        return result;
-    }
 
     public List<MatOfPoint2f> findRectangles(Mat src) {
         // Blur the image to filter out the noise.
@@ -146,14 +63,15 @@ public class RectFinder {
         List<MatOfPoint> contours = new ArrayList<MatOfPoint>();
         List<MatOfPoint2f> rectangles = new ArrayList<MatOfPoint2f>();
 
+        List<Mat> sources = new ArrayList<Mat>();
+        sources.add(blurred);
+        List<Mat> destinations = new ArrayList<Mat>();
+        destinations.add(gray0);
+
+        double areaThreshold = src.rows() * src.cols() * areaThresholdRatio;
+
         // Find squares in every color plane of the image.
         for (int c = 0; c < 3; c++) {
-            List<Mat> sources = new ArrayList<Mat>();
-            sources.add(blurred);
-
-            List<Mat> destinations = new ArrayList<Mat>();
-            destinations.add(gray0);
-
             int[] ch = {c, 0};
             MatOfInt fromTo = new MatOfInt(ch);
 
@@ -170,8 +88,8 @@ public class RectFinder {
                     // Dilate Canny output to remove potential holes between edge segments.
                     Imgproc.dilate(gray, gray, Mat.ones(new Size(3, 3), 0));
                 } else {
-                    int thresh = (l + 1) * 255 / N;
-                    Imgproc.threshold(gray0, gray, thresh, 255, Imgproc.THRESH_BINARY);
+                    int threshold = (l + 1) * 255 / N;
+                    Imgproc.threshold(gray0, gray, threshold, 255, Imgproc.THRESH_BINARY);
                 }
 
                 // Find contours and store them all as a list.
@@ -181,10 +99,11 @@ public class RectFinder {
                     MatOfPoint2f contourFloat = toMatOfPointFloat(contour);
                     double arcLen = Imgproc.arcLength(contourFloat, true) * 0.02;
 
+                    // Approximate polygonal curves.
                     MatOfPoint2f approx = new MatOfPoint2f();
                     Imgproc.approxPolyDP(contourFloat, approx, arcLen, true);
 
-                    if (isRect(approx)) {
+                    if (isRectangle(approx, areaThreshold)) {
                         rectangles.add(approx);
                     }
                 }
@@ -206,11 +125,11 @@ public class RectFinder {
         return matFloat;
     }
 
-    private boolean isRect(MatOfPoint2f polygon) {
+    private boolean isRectangle(MatOfPoint2f polygon, double areaThreshold) {
         MatOfPoint polygonInt = toMatOfPointInt(polygon);
 
         // Check if the contour is a rectangle, has certain number of area and is convex.
-        if (polygon.rows() == 4 && Math.abs(Imgproc.contourArea(polygon)) > AREA_THRESHOLD && Imgproc.isContourConvex(polygonInt)) {
+        if (polygon.rows() == 4 && Math.abs(Imgproc.contourArea(polygon)) > areaThreshold && Imgproc.isContourConvex(polygonInt)) {
             // Check if the all angles are more than 72.54 degrees (cos 0.3).
             double maxCosine = 0;
             Point[] approxPoints = polygon.toArray();
