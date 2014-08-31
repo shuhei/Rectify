@@ -2,7 +2,7 @@
 
 [WIP] A sample Android application that performs perspective correction
 
-![Sample](sample.ong)
+![Sample](sample.png)
 
 ## TODO
 
