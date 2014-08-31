@@ -27,12 +27,28 @@
             android:layout_height="fill_parent" />
     </LinearLayout>
 
-    <Button
-        android:text="Rectify"
+    <LinearLayout
+        android:layout_marginTop="20px"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:onClick="onRectifyButtonClick"
-        android:background="@android:color/holo_green_light"
-        android:textColor="@android:color/white" />
+        android:orientation="horizontal">
+        <Button
+            android:text="Take a photo"
+            android:layout_marginRight="20px"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:onClick="onPhotoButtonClick"
+            android:background="@android:color/holo_green_light"
+            android:textColor="@android:color/white" />
+        <Button
+            android:text="Rectify"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:onClick="onRectifyButtonClick"
+            android:background="@android:color/holo_green_light"
+            android:textColor="@android:color/white" />
+    </LinearLayout>
 
 </LinearLayout>

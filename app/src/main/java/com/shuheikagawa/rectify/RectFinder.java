@@ -22,10 +22,12 @@ public class RectFinder {
     private static final int N = 5; // 11 in the original sample.
     private static final int CANNY_THRESHOLD = 50;
 
-    private double areaThresholdRatio;
+    private double areaLowerThresholdRatio;
+    private double areaUpperThresholdRatio;
 
-    public RectFinder(double areaThresholdRatio) {
-        this.areaThresholdRatio = areaThresholdRatio;
+    public RectFinder(double areaLowerThresholdRatio, double areaUpperThresholdRatio) {
+        this.areaLowerThresholdRatio = areaLowerThresholdRatio;
+        this.areaUpperThresholdRatio = areaUpperThresholdRatio;
     }
 
     public MatOfPoint2f findRectangle(Mat src) {
@@ -68,7 +70,7 @@ public class RectFinder {
         List<Mat> destinations = new ArrayList<Mat>();
         destinations.add(gray0);
 
-        double areaThreshold = src.rows() * src.cols() * areaThresholdRatio;
+        int srcArea = src.rows() * src.cols();
 
         // Find squares in every color plane of the image.
         for (int c = 0; c < 3; c++) {
@@ -103,7 +105,7 @@ public class RectFinder {
                     MatOfPoint2f approx = new MatOfPoint2f();
                     Imgproc.approxPolyDP(contourFloat, approx, arcLen, true);
 
-                    if (isRectangle(approx, areaThreshold)) {
+                    if (isRectangle(approx, srcArea)) {
                         rectangles.add(approx);
                     }
                 }
@@ -125,26 +127,36 @@ public class RectFinder {
         return matFloat;
     }
 
-    private boolean isRectangle(MatOfPoint2f polygon, double areaThreshold) {
+    private boolean isRectangle(MatOfPoint2f polygon, int srcArea) {
         MatOfPoint polygonInt = toMatOfPointInt(polygon);
 
-        // Check if the contour is a rectangle, has certain number of area and is convex.
-        if (polygon.rows() == 4 && Math.abs(Imgproc.contourArea(polygon)) > areaThreshold && Imgproc.isContourConvex(polygonInt)) {
-            // Check if the all angles are more than 72.54 degrees (cos 0.3).
-            double maxCosine = 0;
-            Point[] approxPoints = polygon.toArray();
-
-            for (int i = 2; i < 5; i++) {
-                double cosine = Math.abs(angle(approxPoints[i % 4], approxPoints[i - 2], approxPoints[i - 1]));
-                maxCosine = Math.max(cosine, maxCosine);
-            }
-
-            if (maxCosine < 0.3) {
-                return true;
-            }
+        if (polygon.rows() != 4) {
+            return false;
         }
 
-        return false;
+        double area = Math.abs(Imgproc.contourArea(polygon));
+        if (area < srcArea * areaLowerThresholdRatio || area > srcArea * areaUpperThresholdRatio) {
+            return false;
+        }
+
+        if (!Imgproc.isContourConvex(polygonInt)) {
+            return false;
+        }
+
+        // Check if the all angles are more than 72.54 degrees (cos 0.3).
+        double maxCosine = 0;
+        Point[] approxPoints = polygon.toArray();
+
+        for (int i = 2; i < 5; i++) {
+            double cosine = Math.abs(angle(approxPoints[i % 4], approxPoints[i - 2], approxPoints[i - 1]));
+            maxCosine = Math.max(cosine, maxCosine);
+        }
+
+        if (maxCosine >= 0.3) {
+            return false;
+        }
+
+        return true;
     }
 
     private double angle(Point p1, Point p2, Point p0) {

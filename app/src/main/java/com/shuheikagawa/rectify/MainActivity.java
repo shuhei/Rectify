@@ -1,9 +1,14 @@
 package com.shuheikagawa.rectify;
 
 import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.hardware.Camera;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -42,6 +47,52 @@ public class MainActivity extends Activity {
         OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_9, this, openCVLoaderCallback);
     }
 
+    @Override
+    protected void onNewIntent(Intent intent) {
+        Log.d(DEBUG_TAG, "New intent has come.");
+
+        super.onNewIntent(intent);
+
+        if (intent.getBooleanExtra(CameraActivity.EXTRA_PHOTO, false)) {
+            Log.d(DEBUG_TAG, "Received a photo from camera.");
+
+            byte[] bytes = PhotoHolder.getInstance().getBytes();
+            Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+            PhotoHolder.getInstance().clean();
+
+            bitmap = resizeImageToShow(bitmap);
+
+            Log.d(DEBUG_TAG, "Showing the photo from camera.");
+            ImageView sourceImageView = (ImageView) findViewById(R.id.source_image_view);
+            sourceImageView.setImageBitmap(bitmap);
+        }
+    }
+
+    private Bitmap resizeImageToShow(Bitmap bitmap) {
+        final float LIMIT = 2048f;
+
+        if (bitmap.getWidth() <= LIMIT && bitmap.getHeight() <= LIMIT) {
+            return bitmap;
+        }
+
+        double widthRatio = bitmap.getWidth() / LIMIT;
+        double heightRatio = bitmap.getHeight() / LIMIT;
+
+        double ratio = Math.max(widthRatio, heightRatio);
+
+        int resizedWidth = (int)(bitmap.getWidth() / ratio);
+        int resizedHeight = (int)(bitmap.getHeight() / ratio);
+
+        Log.d(DEBUG_TAG, String.format("Resizing image to %d %d.", resizedWidth, resizedHeight));
+
+        return Bitmap.createScaledBitmap(bitmap, resizedWidth, resizedHeight, false);
+    }
+
+    public void onPhotoButtonClick(View view) {
+        Intent intent = new Intent(this, CameraActivity.class);
+        startActivity(intent);
+    }
+
     public void onRectifyButtonClick(View view) {
         if (!openCVLoaded) {
             Toast.makeText(this, "OpenCV is not yet loaded.", Toast.LENGTH_LONG).show();
@@ -60,7 +111,7 @@ public class MainActivity extends Activity {
         Mat srcMat = bitmapToMat(bitmap);
 
         // Find the largest rectangle.
-        RectFinder rectFinder = new RectFinder(0.2);
+        RectFinder rectFinder = new RectFinder(0.2, 0.98);
         MatOfPoint2f rectangle = rectFinder.findRectangle(srcMat);
 
         if (rectangle == null) {
