@@ -1,7 +1,5 @@
 package com.shuheikagawa.rectify;
 
-import org.opencv.photo.Photo;
-
 // Use singleton to share data between activities.
 // http://stackoverflow.com/questions/4878159/android-whats-the-best-way-to-share-data-between-activities
 public class PhotoHolder {
