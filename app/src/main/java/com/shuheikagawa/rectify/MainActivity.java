@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -95,6 +96,9 @@ public class MainActivity extends Activity {
             return;
         }
 
+        Button rectifyButton = (Button) findViewById(R.id.rectify_button);
+        rectifyButton.setEnabled(false);
+
         // Find image views.
         ImageView sourceImageView = (ImageView) findViewById(R.id.source_image_view);
         ImageView destinationImageView = (ImageView) findViewById(R.id.destination_image_view);
@@ -112,6 +116,7 @@ public class MainActivity extends Activity {
 
         if (rectangle == null) {
             Toast.makeText(this, "No rectangles were found.", Toast.LENGTH_LONG).show();
+            rectifyButton.setEnabled(true);
             return;
         }
 
@@ -125,6 +130,8 @@ public class MainActivity extends Activity {
 
         // Show the result bitmap on the destination image view.
         destinationImageView.setImageBitmap(resultBitmap);
+
+        rectifyButton.setEnabled(true);
     }
 
     private BaseLoaderCallback openCVLoaderCallback = new BaseLoaderCallback(this) {

@@ -39,16 +39,17 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:onClick="onPhotoButtonClick"
-            android:background="@android:color/holo_green_light"
+            android:background="@drawable/button"
             android:textColor="@android:color/white" />
         <Button
             android:text="Rectify"
+            android:id="@+id/rectify_button"
             android:layout_weight="1"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:onClick="onRectifyButtonClick"
-            android:background="@android:color/holo_green_light"
-            android:textColor="@android:color/white" />
+            android:textColor="@android:color/white"
+            android:background="@drawable/button" />
     </LinearLayout>
 
 </LinearLayout>
