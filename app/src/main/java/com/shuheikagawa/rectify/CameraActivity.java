@@ -3,12 +3,22 @@ package com.shuheikagawa.rectify;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.hardware.Camera;
+import android.hardware.SensorManager;
+import android.media.Image;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Display;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.OrientationEventListener;
+import android.view.Surface;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
@@ -23,6 +33,8 @@ public class CameraActivity extends Activity {
     private Thread.UncaughtExceptionHandler originalExceptionHandler;
     private boolean hasExceptionHandler = false;
 
+    private FrameLayout previewLayout;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -34,6 +46,8 @@ public class CameraActivity extends Activity {
             originalExceptionHandler = Thread.getDefaultUncaughtExceptionHandler();
             Thread.setDefaultUncaughtExceptionHandler(exceptionHandler);
         }
+
+        previewLayout = (FrameLayout) findViewById(R.id.camera_preview);
     }
 
     @Override
@@ -67,7 +81,6 @@ public class CameraActivity extends Activity {
         }
 
         preview = new CameraPreview(this, camera);
-        FrameLayout previewLayout = (FrameLayout) findViewById(R.id.camera_preview);
         previewLayout.addView(preview);
     }
 
@@ -121,8 +134,10 @@ public class CameraActivity extends Activity {
             }
             Log.d(DEBUG_TAG, "Showing the taken photo.");
 
+            Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+
             // Go back to the parent with the photo data.
-            PhotoHolder.getInstance().setBytes(bytes);
+            PhotoHolder.getInstance().set(bitmap);
 
             Intent upIntent = getParentActivityIntent();
             upIntent.putExtra(EXTRA_PHOTO, true);

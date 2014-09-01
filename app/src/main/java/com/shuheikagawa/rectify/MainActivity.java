@@ -53,8 +53,7 @@ public class MainActivity extends Activity {
         if (intent.getBooleanExtra(CameraActivity.EXTRA_PHOTO, false)) {
             Log.d(DEBUG_TAG, "Received a photo from camera.");
 
-            byte[] bytes = PhotoHolder.getInstance().getBytes();
-            Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+            Bitmap bitmap = PhotoHolder.getInstance().get();
             PhotoHolder.getInstance().clean();
 
             bitmap = resizeImageToShow(bitmap);
@@ -105,7 +104,7 @@ public class MainActivity extends Activity {
         Bitmap bitmap = ((BitmapDrawable) drawable).getBitmap();
 
         // Create an OpenCV mat from the bitmap.
-        Mat srcMat = bitmapToMat(bitmap);
+        Mat srcMat = ImageUtils.bitmapToMat(bitmap);
 
         // Find the largest rectangle.
         RectFinder rectFinder = new RectFinder(0.2, 0.98);
@@ -121,24 +120,11 @@ public class MainActivity extends Activity {
         Mat dstMat = perspective.transform(srcMat, rectangle);
 
         // Create a bitmap from the result mat.
-        Bitmap resultBitmap = matToBitmap(dstMat);
+        Bitmap resultBitmap = ImageUtils.matToBitmap(dstMat);
         Utils.matToBitmap(dstMat, resultBitmap);
 
         // Show the result bitmap on the destination image view.
         destinationImageView.setImageBitmap(resultBitmap);
-    }
-
-    private Mat bitmapToMat(Bitmap bitmap) {
-        Mat mat = new Mat(bitmap.getHeight(), bitmap.getWidth(), CvType.CV_8U, new Scalar(4));
-        Bitmap bitmap32 = bitmap.copy(Bitmap.Config.ARGB_8888, true);
-        Utils.bitmapToMat(bitmap32, mat);
-        return mat;
-    }
-
-    private Bitmap matToBitmap(Mat mat) {
-        Bitmap bitmap = Bitmap.createBitmap(mat.cols(), mat.rows(), Bitmap.Config.ARGB_8888);
-        Utils.matToBitmap(mat, bitmap);
-        return bitmap;
     }
 
     private BaseLoaderCallback openCVLoaderCallback = new BaseLoaderCallback(this) {

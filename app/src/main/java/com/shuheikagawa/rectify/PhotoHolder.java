@@ -1,11 +1,13 @@
 package com.shuheikagawa.rectify;
 
+import android.graphics.Bitmap;
+
 // Use singleton to share data between activities.
 // http://stackoverflow.com/questions/4878159/android-whats-the-best-way-to-share-data-between-activities
 public class PhotoHolder {
     private static final PhotoHolder theInstance = new PhotoHolder();
 
-    private byte[] bytes;
+    private Bitmap bitmap;
 
     public static PhotoHolder getInstance() {
         return theInstance;
@@ -14,19 +16,19 @@ public class PhotoHolder {
     private PhotoHolder() {
     }
 
-    public byte[] getBytes() {
-        return bytes;
+    public Bitmap get() {
+        return bitmap;
     }
 
-    public boolean hasBytes() {
-        return bytes != null;
+    public boolean contains() {
+        return bitmap != null;
     }
 
-    public void setBytes(byte[] bytes) {
-        this.bytes = bytes;
+    public void set(Bitmap bitmap) {
+        this.bitmap = bitmap;
     }
 
     public void clean() {
-        this.bytes = null;
+        bitmap = null;
     }
 }
