@@ -1,5 +1,7 @@
 package com.shuheikagawa.rectify;
 
+import android.util.Log;
+
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint2f;
@@ -17,10 +19,12 @@ public class PerspectiveTransformation {
     }
 
     public Mat transform(Mat src, MatOfPoint2f corners) {
-        Size size = getRectangleSize(corners);
-        Mat result = Mat.zeros(size, src.type());
-
         MatOfPoint2f sortedCorners = sortCorners(corners);
+        Size size = getRectangleSize(sortedCorners);
+
+        Log.d(DEBUG_TAG, String.format("Transforming to: %f %f", size.width, size.height));
+
+        Mat result = Mat.zeros(size, src.type());
         MatOfPoint2f imageOutline = getOutline(result);
 
         Mat transformation = Imgproc.getPerspectiveTransform(sortedCorners, imageOutline);
@@ -80,6 +84,12 @@ public class PerspectiveTransformation {
         Point topRight = topPoints.get(0).x > topPoints.get(1).x ? topPoints.get(0) : topPoints.get(1);
         Point bottomLeft = bottomPoints.get(0).x > bottomPoints.get(1).x ? bottomPoints.get(1) : bottomPoints.get(0);
         Point bottomRight = bottomPoints.get(0).x > bottomPoints.get(1).x ? bottomPoints.get(0) : bottomPoints.get(1);
+
+        Log.d(DEBUG_TAG, String.format("Sorted corners:"));
+        Log.d(DEBUG_TAG, String.format("      top left: %f %f", topLeft.x, topLeft.y));
+        Log.d(DEBUG_TAG, String.format("     top right: %f %f", topRight.x, topRight.y));
+        Log.d(DEBUG_TAG, String.format("   bottom left: %f %f", bottomLeft.x, bottomLeft.y));
+        Log.d(DEBUG_TAG, String.format("  bottom right: %f %f", bottomRight.x, bottomRight.y));
 
         MatOfPoint2f result = new MatOfPoint2f();
         Point[] sortedPoints = {topLeft, topRight, bottomRight, bottomLeft};
