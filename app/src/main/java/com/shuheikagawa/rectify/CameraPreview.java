@@ -5,6 +5,7 @@ import android.hardware.Camera;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.ViewGroup;
 
 import java.io.IOException;
 
@@ -27,6 +28,14 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
     @Override
     public void surfaceCreated(SurfaceHolder surfaceHolder) {
         Log.d(DEBUG_TAG, "Starting camera preview.");
+
+        // Change the surface view's aspect ratio according to the preview's.
+        Camera.Parameters params = camera.getParameters();
+        Camera.Size previewSize = params.getPreviewSize();
+        int desirableWidth = getHeight() * previewSize.width / previewSize.height;
+        ViewGroup.LayoutParams layoutParams = getLayoutParams();
+        layoutParams.width = desirableWidth;
+        setLayoutParams(layoutParams);
 
         try {
             camera.setPreviewDisplay(holder);
