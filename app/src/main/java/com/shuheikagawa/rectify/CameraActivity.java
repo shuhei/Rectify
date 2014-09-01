@@ -61,6 +61,11 @@ public class CameraActivity extends Activity {
 
         openCamera();
 
+        if (camera == null) {
+            Toast.makeText(this, "Failed to open camera.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
         preview = new CameraPreview(this, camera);
         FrameLayout previewLayout = (FrameLayout) findViewById(R.id.camera_preview);
         previewLayout.addView(preview);
@@ -84,13 +89,27 @@ public class CameraActivity extends Activity {
 
         Log.d(DEBUG_TAG, "Taking picture.");
 
-        camera.takePicture(null, null, pictureCallback);
+        // Perform auto focus and then take a picture if available.
+        if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_AUTOFOCUS) &&
+                preview.isPreviewing()) {
+            camera.cancelAutoFocus();
+            camera.autoFocus(autoFocusCallback);
+        } else {
+            camera.takePicture(null, null, pictureCallback);
+        }
     }
 
     public void onCancelButtonClick(View view) {
         Intent upIntent = getParentActivityIntent();
         navigateUpTo(upIntent);
     }
+
+    private Camera.AutoFocusCallback autoFocusCallback = new Camera.AutoFocusCallback() {
+        @Override
+        public void onAutoFocus(boolean b, Camera camera) {
+            camera.takePicture(null, null, pictureCallback);
+        }
+    };
 
     private Camera.PictureCallback pictureCallback = new Camera.PictureCallback() {
         @Override
@@ -128,7 +147,7 @@ public class CameraActivity extends Activity {
         }
 
         try {
-            camera = Camera.open();
+            camera = Camera.open(0);
         } catch (Exception e) {
             Log.e(DEBUG_TAG, "Got error opening camera.");
             e.printStackTrace();
@@ -153,9 +172,7 @@ public class CameraActivity extends Activity {
     }
 
     private boolean isCameraAvailable() {
-        PackageManager packageManager = getPackageManager();
-
-        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) {
+        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) {
             return false;
         }
 

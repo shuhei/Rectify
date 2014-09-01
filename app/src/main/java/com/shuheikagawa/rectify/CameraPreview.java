@@ -12,6 +12,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
     private Camera camera;
     private SurfaceHolder holder;
     private static final String DEBUG_TAG = "CameraPreview";
+    private boolean previewing = false;
 
     public CameraPreview(Context context, Camera camera) {
         super(context);
@@ -35,6 +36,8 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
             e.printStackTrace();
         }
 
+        previewing = true;
+
         Log.d(DEBUG_TAG, "Started camera preview.");
     }
 
@@ -51,6 +54,8 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
             Log.d(DEBUG_TAG, "Tried to stop a non-existent preview.");
         }
 
+        previewing = false;
+
         // TODO: If you set a specific size for camera preview, set preview size and
         // make any resize, rotate or reformatting changes here.
 
@@ -61,10 +66,16 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         } catch (IOException e) {
             Log.d(DEBUG_TAG, "Got an error starting camera preview.");
         }
+
+        previewing = true;
     }
 
     @Override
     public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
         // No op.
+    }
+
+    public boolean isPreviewing() {
+        return previewing;
     }
 }
