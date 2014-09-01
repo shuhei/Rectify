@@ -121,7 +121,7 @@ public class MainActivity extends Activity {
 
         // Create a bitmap from the result mat.
         Bitmap resultBitmap = ImageUtils.matToBitmap(dstMat);
-        Utils.matToBitmap(dstMat, resultBitmap);
+        Log.d(DEBUG_TAG, String.format("Result bitmap: %d %d", resultBitmap.getWidth(), resultBitmap.getHeight()));
 
         // Show the result bitmap on the destination image view.
         destinationImageView.setImageBitmap(resultBitmap);

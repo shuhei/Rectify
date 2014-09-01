@@ -1,8 +1,10 @@
 package com.shuheikagawa.rectify;
 
+import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
@@ -15,15 +17,36 @@ public class PerspectiveTransformation {
     }
 
     public Mat transform(Mat src, MatOfPoint2f corners) {
-        Mat result = Mat.zeros(src.size(), src.type());
+        Size size = getRectangleSize(corners);
+        Mat result = Mat.zeros(size, src.type());
 
         MatOfPoint2f sortedCorners = sortCorners(corners);
         MatOfPoint2f imageOutline = getOutline(result);
 
         Mat transformation = Imgproc.getPerspectiveTransform(sortedCorners, imageOutline);
-        Imgproc.warpPerspective(src, result, transformation, result.size());
+        Imgproc.warpPerspective(src, result, transformation, size);
 
         return result;
+    }
+
+    private Size getRectangleSize(MatOfPoint2f rectangle) {
+        Point[] corners = rectangle.toArray();
+
+        double top = getDistance(corners[0], corners[1]);
+        double right = getDistance(corners[1], corners[2]);
+        double bottom = getDistance(corners[2], corners[3]);
+        double left = getDistance(corners[3], corners[0]);
+
+        double averageWidth = (top + bottom) / 2f;
+        double averageHeight = (right + left) / 2f;
+
+        return new Size(new Point(averageWidth, averageHeight));
+    }
+
+    private double getDistance(Point p1, Point p2) {
+        double dx = p2.x - p1.x;
+        double dy = p2.y - p1.y;
+        return Math.sqrt(dx * dx + dy * dy);
     }
 
     private MatOfPoint2f getOutline(Mat image) {

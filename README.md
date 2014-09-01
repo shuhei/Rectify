@@ -8,6 +8,6 @@
 
 - [x] Auto focus
 - [ ] Adjust preview image's aspect ratio
-- [ ] Adjust transformed image's aspect ratio
+- [x] Adjust transformed image's aspect ratio
 - [ ] Optimize rectangle finding
 - [ ] Cut down memory usage
