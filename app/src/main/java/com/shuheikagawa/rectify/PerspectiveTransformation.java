@@ -85,7 +85,7 @@ public class PerspectiveTransformation {
         Point bottomLeft = bottomPoints.get(0).x > bottomPoints.get(1).x ? bottomPoints.get(1) : bottomPoints.get(0);
         Point bottomRight = bottomPoints.get(0).x > bottomPoints.get(1).x ? bottomPoints.get(0) : bottomPoints.get(1);
 
-        Log.d(DEBUG_TAG, String.format("Sorted corners:"));
+        Log.d(DEBUG_TAG, "Sorted corners:");
         Log.d(DEBUG_TAG, String.format("      top left: %f %f", topLeft.x, topLeft.y));
         Log.d(DEBUG_TAG, String.format("     top right: %f %f", topRight.x, topRight.y));
         Log.d(DEBUG_TAG, String.format("   bottom left: %f %f", bottomLeft.x, bottomLeft.y));

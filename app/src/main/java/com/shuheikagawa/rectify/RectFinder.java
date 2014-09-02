@@ -21,6 +21,7 @@ public class RectFinder {
     private static final String DEBUG_TAG = "RectFinder";
     private static final int N = 5; // 11 in the original sample.
     private static final int CANNY_THRESHOLD = 50;
+    private static final double DOWNSCALE_IMAGE_SIZE = 600f;
 
     private double areaLowerThresholdRatio;
     private double areaUpperThresholdRatio;
@@ -31,7 +32,16 @@ public class RectFinder {
     }
 
     public MatOfPoint2f findRectangle(Mat src) {
-        List<MatOfPoint2f> rectangles = findRectangles(src);
+        // Downscale image for better performance.
+        double ratio = DOWNSCALE_IMAGE_SIZE / Math.max(src.width(), src.height());
+        Size downscaledSize = new Size(src.width() * ratio, src.height() * ratio);
+        Log.d(DEBUG_TAG, "Before downscaling: " + src.size());
+        Mat downscaled = new Mat(downscaledSize, src.type());
+        Log.d(DEBUG_TAG, "After downscaling: " + downscaled.size());
+        Imgproc.resize(src, downscaled, downscaledSize);
+
+        // Find rectangles.
+        List<MatOfPoint2f> rectangles = findRectangles(downscaled);
         Log.d(DEBUG_TAG, rectangles.size() + " rectangles found.");
 
         if (rectangles.size() == 0) {
@@ -39,10 +49,18 @@ public class RectFinder {
             return null;
         }
 
+        // Pick up the largest rectangle.
         Collections.sort(rectangles, AreaDescendingComparator);
         Log.d(DEBUG_TAG, "Sorted rectangles.");
 
-        return rectangles.get(0);
+        MatOfPoint2f largestRectangle = rectangles.get(0);
+        Log.d(DEBUG_TAG, "Before scaling up: " + GeomUtils.pointsToString(largestRectangle));
+
+        // Take back the scale.
+        MatOfPoint2f result = GeomUtils.scaleRectangle(largestRectangle, 1f / ratio);
+        Log.d(DEBUG_TAG, "After scaling up: " + GeomUtils.pointsToString(result));
+
+        return result;
     }
 
     // Compare contours by their areas in descending order.
@@ -59,9 +77,11 @@ public class RectFinder {
         Mat blurred = new Mat();
         Imgproc.medianBlur(src, blurred, 9);
 
+        // Set up images to use.
         Mat gray0 = new Mat(blurred.size(), CvType.CV_8U);
         Mat gray = new Mat();
 
+        // For Core.mixChannels.
         List<MatOfPoint> contours = new ArrayList<MatOfPoint>();
         List<MatOfPoint2f> rectangles = new ArrayList<MatOfPoint2f>();
 
@@ -70,6 +90,7 @@ public class RectFinder {
         List<Mat> destinations = new ArrayList<Mat>();
         destinations.add(gray0);
 
+        // To filter rectangles by their areas.
         int srcArea = src.rows() * src.cols();
 
         // Find squares in every color plane of the image.
@@ -98,7 +119,7 @@ public class RectFinder {
                 Imgproc.findContours(gray, contours, new Mat(), Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
 
                 for (MatOfPoint contour : contours) {
-                    MatOfPoint2f contourFloat = toMatOfPointFloat(contour);
+                    MatOfPoint2f contourFloat = GeomUtils.toMatOfPointFloat(contour);
                     double arcLen = Imgproc.arcLength(contourFloat, true) * 0.02;
 
                     // Approximate polygonal curves.
@@ -115,20 +136,8 @@ public class RectFinder {
         return rectangles;
     }
 
-    private MatOfPoint toMatOfPointInt(MatOfPoint2f mat) {
-        MatOfPoint matInt = new MatOfPoint();
-        mat.convertTo(matInt, CvType.CV_32S);
-        return matInt;
-    }
-
-    private MatOfPoint2f toMatOfPointFloat(MatOfPoint mat) {
-        MatOfPoint2f matFloat = new MatOfPoint2f();
-        mat.convertTo(matFloat, CvType.CV_32FC2);
-        return matFloat;
-    }
-
     private boolean isRectangle(MatOfPoint2f polygon, int srcArea) {
-        MatOfPoint polygonInt = toMatOfPointInt(polygon);
+        MatOfPoint polygonInt = GeomUtils.toMatOfPointInt(polygon);
 
         if (polygon.rows() != 4) {
             return false;
@@ -148,7 +157,7 @@ public class RectFinder {
         Point[] approxPoints = polygon.toArray();
 
         for (int i = 2; i < 5; i++) {
-            double cosine = Math.abs(angle(approxPoints[i % 4], approxPoints[i - 2], approxPoints[i - 1]));
+            double cosine = Math.abs(GeomUtils.angle(approxPoints[i % 4], approxPoints[i - 2], approxPoints[i - 1]));
             maxCosine = Math.max(cosine, maxCosine);
         }
 
@@ -157,13 +166,5 @@ public class RectFinder {
         }
 
         return true;
-    }
-
-    private double angle(Point p1, Point p2, Point p0) {
-        double dx1 = p1.x - p0.x;
-        double dy1 = p1.y - p0.y;
-        double dx2 = p2.x - p0.x;
-        double dy2 = p2.y - p0.y;
-        return (dx1 * dx2 + dy1 * dy2) / Math.sqrt((dx1 * dx1 + dy1 * dy1) * (dx2 * dx2 + dy2 * dy2) + 1e-10);
     }
 }
