@@ -29,12 +29,19 @@ public class MainActivity extends Activity {
     private final static String DEBUG_TAG = "MainActivity";
     private boolean openCVLoaded = false;
 
+    private ImageView sourceImageView;
+    private ImageView destinationImageView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(DEBUG_TAG, "onCreate");
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // Find image views.
+        sourceImageView = (ImageView) findViewById(R.id.source_image_view);
+        destinationImageView = (ImageView) findViewById(R.id.destination_image_view);
     }
 
     @Override
@@ -60,11 +67,14 @@ public class MainActivity extends Activity {
             bitmap = resizeImageToShow(bitmap);
 
             Log.d(DEBUG_TAG, "Showing the photo from camera.");
-            ImageView sourceImageView = (ImageView) findViewById(R.id.source_image_view);
             sourceImageView.setImageBitmap(bitmap);
+
+            // Clear destination image.
+            destinationImageView.setImageResource(android.R.color.transparent);
         }
     }
 
+    // ImageView cannot show too large image.
     private Bitmap resizeImageToShow(Bitmap bitmap) {
         final float LIMIT = 2048f;
 
@@ -99,10 +109,6 @@ public class MainActivity extends Activity {
         Button rectifyButton = (Button) findViewById(R.id.rectify_button);
         rectifyButton.setEnabled(false);
 
-        // Find image views.
-        ImageView sourceImageView = (ImageView) findViewById(R.id.source_image_view);
-        ImageView destinationImageView = (ImageView) findViewById(R.id.destination_image_view);
-
         // Get the bitmap from the image view.
         Drawable drawable = sourceImageView.getDrawable();
         Bitmap bitmap = ((BitmapDrawable) drawable).getBitmap();
@@ -111,6 +117,7 @@ public class MainActivity extends Activity {
         Mat srcMat = ImageUtils.bitmapToMat(bitmap);
 
         // Find the largest rectangle.
+        // Find image views.
         RectFinder rectFinder = new RectFinder(0.2, 0.98);
         MatOfPoint2f rectangle = rectFinder.findRectangle(srcMat);
 
