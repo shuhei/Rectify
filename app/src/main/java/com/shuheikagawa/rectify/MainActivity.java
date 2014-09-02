@@ -4,6 +4,9 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -139,6 +142,32 @@ public class MainActivity extends Activity {
         destinationImageView.setImageBitmap(resultBitmap);
 
         rectifyButton.setEnabled(true);
+    }
+
+    public void onMaskButtonClick(View view) {
+        Log.d(DEBUG_TAG, "Masking image.");
+
+        Drawable drawable = destinationImageView.getDrawable();
+        Bitmap bitmap = ((BitmapDrawable) drawable).getBitmap();
+
+        maskBitmap(bitmap, 0.1f, 0.1f, 0.8f, 0.2f);
+
+        destinationImageView.setImageBitmap(bitmap);
+    }
+
+    private void maskBitmap(Bitmap bitmap, float xRatio, float yRatio, float widthRatio, float heightRatio) {
+        Canvas canvas = new Canvas(bitmap);
+
+        Paint blackFill = new Paint();
+        blackFill.setColor(Color.BLACK);
+        blackFill.setStyle(Paint.Style.FILL);
+
+        float left = bitmap.getWidth() * xRatio;
+        float top = bitmap.getHeight() * xRatio;
+        float right = bitmap.getWidth() * (xRatio + widthRatio);
+        float bottom = bitmap.getWidth() * (yRatio + heightRatio);
+
+        canvas.drawRect(left, top, right, bottom, blackFill);
     }
 
     private BaseLoaderCallback openCVLoaderCallback = new BaseLoaderCallback(this) {

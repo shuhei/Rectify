@@ -43,11 +43,21 @@
             android:textColor="@android:color/white" />
         <Button
             android:text="Rectify"
+            android:layout_marginRight="20px"
             android:id="@+id/rectify_button"
             android:layout_weight="1"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:onClick="onRectifyButtonClick"
+            android:textColor="@android:color/white"
+            android:background="@drawable/button" />
+        <Button
+            android:text="Mask"
+            android:id="@+id/mask_button"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:onClick="onMaskButtonClick"
             android:textColor="@android:color/white"
             android:background="@drawable/button" />
     </LinearLayout>
