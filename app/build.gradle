@@ -22,4 +22,5 @@ android {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile project(':openCVLibrary249')
+    compile 'it.sephiroth.android.library.imagezoom:imagezoom:+'
 }

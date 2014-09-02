@@ -27,13 +27,17 @@ import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Scalar;
 
+import it.sephiroth.android.library.imagezoom.ImageViewTouch;
+import it.sephiroth.android.library.imagezoom.ImageViewTouchBase;
+import it.sephiroth.android.library.imagezoom.graphics.FastBitmapDrawable;
+
 
 public class MainActivity extends Activity {
     private final static String DEBUG_TAG = "MainActivity";
     private boolean openCVLoaded = false;
 
-    private ImageView sourceImageView;
-    private ImageView destinationImageView;
+    private ImageViewTouch sourceImageView;
+    private ImageViewTouch destinationImageView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,9 +46,16 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Find image views.
-        sourceImageView = (ImageView) findViewById(R.id.source_image_view);
-        destinationImageView = (ImageView) findViewById(R.id.destination_image_view);
+        // Set up touch-enabled image views. They cannot be fully configured with XML.
+        sourceImageView = (ImageViewTouch) findViewById(R.id.source_image_view);
+        sourceImageView.setDisplayType(ImageViewTouchBase.DisplayType.FIT_IF_BIGGER);
+        // Do not use ImageViewTouch#setImageResource. Otherwise its getDrawable returns
+        // BitmapDrawable that is incompatible with FastBitmapDrawable.
+        Bitmap sampleBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.unbeaten_tracks);
+        sourceImageView.setImageBitmap(sampleBitmap);
+
+        destinationImageView = (ImageViewTouch) findViewById(R.id.destination_image_view);
+        destinationImageView.setDisplayType(ImageViewTouchBase.DisplayType.FIT_IF_BIGGER);
     }
 
     @Override
@@ -93,7 +104,7 @@ public class MainActivity extends Activity {
         int resizedWidth = (int)(bitmap.getWidth() / ratio);
         int resizedHeight = (int)(bitmap.getHeight() / ratio);
 
-        Log.d(DEBUG_TAG, String.format("Resizing image to %d %d.", resizedWidth, resizedHeight));
+        Log.d(DEBUG_TAG, String.format("ResizTouching image to %d %d.", resizedWidth, resizedHeight));
 
         return Bitmap.createScaledBitmap(bitmap, resizedWidth, resizedHeight, false);
     }
@@ -113,8 +124,9 @@ public class MainActivity extends Activity {
         rectifyButton.setEnabled(false);
 
         // Get the bitmap from the image view.
-        Drawable drawable = sourceImageView.getDrawable();
-        Bitmap bitmap = ((BitmapDrawable) drawable).getBitmap();
+        // Notice that ImageViewTouch uses FastBitmapDrawable that does not inherit BitmapDrawable.
+        FastBitmapDrawable drawable = (FastBitmapDrawable) sourceImageView.getDrawable();
+        Bitmap bitmap = drawable.getBitmap();
 
         // Create an OpenCV mat from the bitmap.
         Mat srcMat = ImageUtils.bitmapToMat(bitmap);
@@ -147,8 +159,8 @@ public class MainActivity extends Activity {
     public void onMaskButtonClick(View view) {
         Log.d(DEBUG_TAG, "Masking image.");
 
-        Drawable drawable = destinationImageView.getDrawable();
-        Bitmap bitmap = ((BitmapDrawable) drawable).getBitmap();
+        FastBitmapDrawable drawable = (FastBitmapDrawable) destinationImageView.getDrawable();
+        Bitmap bitmap = drawable.getBitmap();
 
         maskBitmap(bitmap, 0.1f, 0.1f, 0.8f, 0.2f);
 

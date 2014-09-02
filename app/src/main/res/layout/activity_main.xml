@@ -14,13 +14,12 @@
         android:layout_weight="1"
         android:layout_width="fill_parent"
         android:layout_height="0dp">
-        <ImageView
+        <it.sephiroth.android.library.imagezoom.ImageViewTouch
             android:id="@+id/source_image_view"
-            android:src="@drawable/unbeaten_tracks"
             android:layout_weight="1"
             android:layout_width="0dp"
             android:layout_height="fill_parent" />
-        <ImageView
+        <it.sephiroth.android.library.imagezoom.ImageViewTouch
             android:id="@+id/destination_image_view"
             android:layout_weight="1"
             android:layout_width="0dp"

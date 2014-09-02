@@ -79,6 +79,8 @@
     </content>
     <orderEntry type="jdk" jdkName="Android API 20 Platform" jdkType="Android SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" exported="" name="android-easing-1.0.3" level="project" />
+    <orderEntry type="library" exported="" name="imagezoom-1.0.5" level="project" />
     <orderEntry type="module" module-name="openCVLibrary249" exported="" />
   </component>
 </module>
