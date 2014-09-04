@@ -162,7 +162,7 @@ public class MainActivity extends Activity {
         FastBitmapDrawable drawable = (FastBitmapDrawable) destinationImageView.getDrawable();
         Bitmap bitmap = drawable.getBitmap();
 
-        maskBitmap(bitmap, 0.1f, 0.1f, 0.8f, 0.2f);
+        maskBitmap(bitmap, 0.03f, 0.02f, 0.45f, 0.32f);
 
         destinationImageView.setImageBitmap(bitmap);
     }
@@ -175,9 +175,9 @@ public class MainActivity extends Activity {
         blackFill.setStyle(Paint.Style.FILL);
 
         float left = bitmap.getWidth() * xRatio;
-        float top = bitmap.getHeight() * xRatio;
+        float top = bitmap.getHeight() * yRatio;
         float right = bitmap.getWidth() * (xRatio + widthRatio);
-        float bottom = bitmap.getWidth() * (yRatio + heightRatio);
+        float bottom = bitmap.getHeight() * (yRatio + heightRatio);
 
         canvas.drawRect(left, top, right, bottom, blackFill);
     }
